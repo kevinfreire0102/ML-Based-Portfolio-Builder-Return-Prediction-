@@ -1,0 +1,74 @@
+import unittest
+import pandas as pd
+import numpy as np
+from unittest.mock import patch, MagicMock
+from src.data_loader import download_sp500_data
+
+# --- Setup Mock Data ---
+
+def create_mock_data():
+    """Creates a mock DataFrame mimicking yfinance output."""
+    dates = pd.to_datetime(['2020-01-01', '2020-01-02', '2020-01-03', '2020-01-04'])
+    data = {
+        'AAPL': [150.0, 151.0, 152.0, np.nan],
+        'MSFT': [200.0, 201.0, np.nan, np.nan],
+        'GOOGL': [1000.0, 1001.0, 1002.0, np.nan] # The last row will be all NaNs
+    }
+    # yfinance returns a multi-indexed DataFrame, but we only target 'Adj Close'
+    mock_df_adj_close = pd.DataFrame(data, index=dates)
+    
+    # We must structure the mock to match what yfinance.download returns before slicing
+    mock_return = pd.DataFrame(index=dates)
+    mock_return['Adj Close', 'AAPL'] = mock_df_adj_close['AAPL']
+    mock_return['Adj Close', 'MSFT'] = mock_df_adj_close['MSFT']
+    mock_return['Adj Close', 'GOOGL'] = mock_df_adj_close['GOOGL']
+    mock_return.columns = pd.MultiIndex.from_tuples(mock_return.columns)
+    
+    return mock_return
+
+# --- Unit Test Class ---
+
+class TestDataLoader(unittest.TestCase):
+    """
+    Unit tests for functions in src/data_loader.py using mocking.
+    """
+
+    @patch('yfinance.download')
+    def test_download_sp500_data_structure(self, mock_download):
+        """Test if the downloaded DataFrame has the correct shape and type."""
+        
+        # 1. Configure the mock to return our simulated data
+        mock_download.return_value = create_mock_data()
+        
+        tickers_subset = ['AAPL', 'MSFT', 'GOOGL']
+        data = download_sp500_data(tickers=tickers_subset, start_date='2020-01-01', end_date='2020-01-03')
+        
+        # 2. Assertions
+        self.assertIsInstance(data, pd.DataFrame)
+        # The function should drop the last date ('2020-01-04') because all tickers are NaN there.
+        self.assertEqual(data.shape, (3, 3)) 
+        self.assertListEqual(data.columns.tolist(), tickers_subset)
+        self.assertNotIn(pd.to_datetime('2020-01-04'), data.index)
+
+    @patch('yfinance.download')
+    def test_download_sp500_data_call(self, mock_download):
+        """Test if yfinance.download is called with the correct arguments."""
+        
+        mock_download.return_value = create_mock_data()
+        test_tickers = ['T1', 'T2']
+        test_start = '2022-01-01'
+        test_end = '2023-01-01'
+        
+        download_sp500_data(tickers=test_tickers, start_date=test_start, end_date=test_end)
+        
+        # Assertion: Check if yf.download was called exactly once with the required args
+        mock_download.assert_called_once_with(
+            test_tickers, 
+            start=test_start, 
+            end=test_end, 
+            interval="1d"
+        )
+
+# --- Execution Block ---
+if __name__ == '__main__':
+    unittest.main()
