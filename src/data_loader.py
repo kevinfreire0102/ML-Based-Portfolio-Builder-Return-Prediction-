@@ -32,8 +32,9 @@ def download_sp500_data(tickers: List[str] = TICKERS_SAMPLE,
         interval="1d"
     )['Adj Close']
     
-    # Drop dates where ALL prices are missing
-    data.dropna(how='all', inplace=True)
+# Ensure the DataFrame is a clean copy before cleaning it further
+data = data.copy()
+data.dropna(how='all', inplace=True)
     
     print("Download completed.")
     return data
