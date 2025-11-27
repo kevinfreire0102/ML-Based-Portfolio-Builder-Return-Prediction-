@@ -3,18 +3,7 @@ import numpy as np
 from typing import List, Tuple
 
 def calculate_returns(data: pd.DataFrame, prediction_horizon: int = 5) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Calculates the target variable (future returns) and the input data (current prices).
     
-    Args:
-        data (pd.DataFrame): DataFrame of historical adjusted closing prices.
-        prediction_horizon (int): Number of trading days ahead to predict (e.g., 5 for next week).
-
-    Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]: A tuple containing:
-            - features_df (pd.DataFrame): Data ready for ML, with dates matching the targets.
-            - targets_df (pd.DataFrame): DataFrame of future returns, indexed by the start date of the prediction.
-    """
     targets_df = data.pct_change(prediction_horizon).shift(-prediction_horizon)
     features_df = data.copy() 
     
@@ -25,22 +14,11 @@ def calculate_returns(data: pd.DataFrame, prediction_horizon: int = 5) -> Tuple[
     return features_df, targets_df
 
 def add_technical_indicators(features_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calculates and adds various technical indicators to the features DataFrame.
     
-    Args:
-        features_df (pd.DataFrame): DataFrame of adjusted prices.
-
-    Returns:
-        pd.DataFrame: DataFrame augmented with technical indicators.
-    """
-    # Create an empty DataFrame to store all new features
-    # We use the original index for alignment
     new_features = pd.DataFrame(index=features_df.index)
 
-    # Loop through each ticker to calculate indicators individually
     for ticker in features_df.columns:
-        prices = features_df[ticker] # Select the price series for one ticker
+        prices = features_df[ticker] 
 
         # 1. Calculate Simple Returns (1-day lagged returns)
         daily_return = prices.pct_change(1)
@@ -73,7 +51,6 @@ def add_technical_indicators(features_df: pd.DataFrame) -> pd.DataFrame:
         new_features[f'{ticker}_price_lag_1'] = prices.shift(1)
 
 
-    # Merge new features with the original features (prices)
     features_df = pd.concat([features_df, new_features], axis=1)
 
     # Drop the first 200 rows because they contain NaNs from the largest rolling calculations (SMA_200)
@@ -93,13 +70,11 @@ if __name__ == "__main__":
     # 1. Calculate returns and align features/targets (Horizon = 5 days)
     features, targets = calculate_returns(mock_data, prediction_horizon=5)
     
-    # 2. Add Indicators (The core of this step)
     features_with_indicators = add_technical_indicators(features)
     
     print("\n--- FEATURES WITH INDICATORS ---")
     print("Columns:", features_with_indicators.columns.tolist())
     print("\nShape after cleaning NaNs:", features_with_indicators.shape)
-    print(features_with_indicators.tail(5)) # Check the end of the data
+    print(features_with_indicators.tail(5)) 
     
-    # Check the column count: 2 (Original) + 6 (New Features per Ticker) * 2 Tickers = 14 columns
     print(f"\nTotal Columns: {len(features_with_indicators.columns)}. Expected columns (2 original + 12 new) = 14.")

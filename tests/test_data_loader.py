@@ -4,7 +4,6 @@ import numpy as np
 from unittest.mock import patch
 from src.data_loader import download_sp500_data
 
-# --- Setup Mock Data ---
 
 def create_mock_data():
     """Creates a mock DataFrame mimicking yfinance output structure."""
@@ -46,7 +45,7 @@ class TestDataLoader(unittest.TestCase):
         
         # 2. Assertions (The 4th row, all NaN, should be dropped by the function)
         self.assertIsInstance(data, pd.DataFrame)
-        self.assertEqual(data.shape, (3, 3)) # Expect 3 rows, not 4
+        self.assertEqual(data.shape, (3, 3)) 
         self.assertListEqual(data.columns.tolist(), tickers_subset)
         self.assertNotIn(pd.to_datetime('2020-01-04'), data.index)
 
@@ -61,17 +60,14 @@ class TestDataLoader(unittest.TestCase):
         
         download_sp500_data(tickers=test_tickers, start_date=test_start, end_date=test_end)
         
-        # Assertion: Check if yf.download was called exactly once with the required args
-        # NOTE: Arguments must now include the auto_adjust=False and actions=True fix
         mock_download.assert_called_once_with(
             test_tickers, 
             start=test_start, 
             end=test_end, 
             interval="1d",
-            auto_adjust=False, # ARGUMENT CORRIGÉ
-            actions=True        # ARGUMENT CORRIGÉ
+            auto_adjust=False, 
+            actions=True        
         )
 
-# --- Execution Block ---
 if __name__ == '__main__':
     unittest.main()
