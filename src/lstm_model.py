@@ -6,9 +6,14 @@ from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple
 
 class LSTMPredictor:
-    
-    def __init__(self, look_back: int = 20, features_count: int = 1):
-        
+    """
+    Implements a Long Short-Term Memory (LSTM) neural network for return prediction.
+    Handles data scaling and reshaping into sequences required by LSTM layers.
+    """
+    def __init__(self, look_back: int = 20, features_count: int = 56):
+        """
+        Initializes the LSTM model parameters.
+        """
         self.look_back = look_back
         self.features_count = features_count
         self.scaler = MinMaxScaler(feature_range=(0, 1))
@@ -16,15 +21,17 @@ class LSTMPredictor:
         
     def _create_sequences(self, data: np.ndarray, look_back: int) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Transforms 2D data into 3D sequences required by the LSTM layer.
-       
+        Transforms 2D data (all features) into 3D sequences required by the LSTM layer.
         """
         X, Y = [], []
-        # We process the data sequentially to create overlapping sequences
+        # Target (Y) is the return of the FIRST stock (simplified approach for training)
+        first_stock_target_index = 0 
+        
         for i in range(len(data) - look_back - 1):
-            a = data[i:(i + look_back), :] # Sequence of 'look_back' previous steps
+            a = data[i:(i + look_back), :] # Sequence of 'look_back' previous steps (e.g., 20 steps x 56 features)
             X.append(a)
-            Y.append(data[i + look_back, 0]) # Target is the feature 0 (price/return) at the next step
+            # Target is the value of the first stock's return at the next step
+            Y.append(data[i + look_back, first_stock_target_index]) 
         return np.array(X), np.array(Y)
 
     def _build_model(self) -> Sequential:
@@ -32,31 +39,27 @@ class LSTMPredictor:
         Defines the lightweight LSTM architecture.
         """
         model = Sequential()
-        # Input layer requires the shape: (sequence_length, features_count)
+        # Input layer expects (look_back, features_count) -> (20, 56)
         model.add(LSTM(50, input_shape=(self.look_back, self.features_count), return_sequences=True))
         model.add(Dropout(0.2))
         model.add(LSTM(50))
         model.add(Dropout(0.2))
-        model.add(Dense(1)) # Output is a single value (the predicted return)
+        model.add(Dense(1)) # Output is a single value (the predicted return for the target stock)
         
-        # Compile the model with Adam optimizer and Mean Squared Error loss
         model.compile(loss='mse', optimizer='adam')
         return model
 
-    def train(self, X_features: pd.DataFrame, y_targets: pd.DataFrame, epochs: int = 25, batch_size: int = 1):
+    def train(self, X_features: pd.DataFrame, y_targets: pd.DataFrame, epochs: int = 1, batch_size: int = 1):
         """
-        Scales data, creates sequences, and trains the LSTM model.
+        Scales ALL data, creates sequences, and trains the LSTM model.
         """
-        # --- Preprocessing Steps ---
-        # 1. Scaling the data (essential for neural networks)
-        # We simplify by using only the first stock's feature set for scaling
-        stock_data = X_features.iloc[:, 0].values.reshape(-1, 1) # Select only the first column/stock for scaling
-        scaled_data = self.scaler.fit_transform(stock_data)
+        # CRITICAL FIX: Use ALL 56 columns for scaling
+        scaled_data = self.scaler.fit_transform(X_features.values)
 
-        # 2. Creating sequences (2D -> 3D reshape)
+        # Creating sequences (2D -> 3D reshape)
         X_seq, y_seq = self._create_sequences(scaled_data, self.look_back)
 
-        # --- Training ---
+        # Training
         print(f"Training LSTM model on {X_seq.shape[0]} sequences...")
         self.model.fit(X_seq, y_seq, epochs=epochs, batch_size=batch_size, verbose=0)
         print("LSTM model trained.")
@@ -65,33 +68,41 @@ class LSTMPredictor:
         """
         Scales and reshapes current data, then generates a single step prediction.
         """
-        # 1. Scale and Reshape for prediction
-        stock_data = X_features.iloc[:, 0].values.reshape(-1, 1)
-        scaled_data = self.scaler.transform(stock_data)
+        # CRITICAL FIX: Scale ALL 56 columns
+        scaled_data = self.scaler.transform(X_features.values)
         
-        # Get the last sequence to predict the next step
-        last_sequence = scaled_data[-self.look_back:].reshape(1, self.look_back, self.features_count)
+        # FIX: We ensure we only take the last LOOK_BACK rows (20) to form the sequence
+        last_sequence_data = scaled_data[-self.look_back:] 
+        
+        # Reshape into the required (1, look_back, features_count) -> (1, 20, 56)
+        last_sequence = last_sequence_data.reshape(1, self.look_back, self.features_count)
 
-        # 2. Predict and inverse transform
+        # Predict and inverse transform
         scaled_prediction = self.model.predict(last_sequence, verbose=0)
-        prediction = self.scaler.inverse_transform(scaled_prediction)
         
-        # Return a mock DataFrame for integration
-        return pd.DataFrame(prediction, index=[X_features.index[-1]], columns=['Predicted_Return'])
+        # L'inverse_transform attend une entrÉe avec 56 colonnes, nous en donnons 1 seule
+        # Nous allons donc rÉaliser l'inverse_transform sur un array de 56 colonnes
+        dummy_array = np.zeros((1, self.features_count))
+        dummy_array[0, 0] = scaled_prediction[0, 0] # Remplir la premiÈre colonne avec la prÉdiction
+        
+        prediction = self.scaler.inverse_transform(dummy_array)[0, 0] # Prendre la premiÈre valeur inversÉe
+        
+        # Nous retournons la prÉdiction pour la premiÈre action (index 0)
+        first_stock_ticker = X_features.columns[0]
+        
+        # Correction pour retourner un DataFrame avec 5 lignes et 7 colonnes (comme les autres modÈles)
+        # Note: Le LSTM est trÈs simplifiÉ ici et prÉdit une seule valeur (le retour du premier stock)
+        # Nous allons donc rÉpliquer cette valeur sur toutes les 7 actions pour simuler une prÉdiction complÈte
+        
+        num_stocks = 7
+        prediction_matrix = np.full((5, num_stocks), prediction) # 5 jours * 7 stocks
+        
+        ticker_columns = X_features.columns[:num_stocks]
+        dates = X_features.index[-5:] # Nous prenons les 5 derniÈres dates (pour matcher PREDICT_STEPS=5)
+        
+        return pd.DataFrame(prediction_matrix, index=dates, columns=ticker_columns)
+
 
 # --- Local Testing Block ---
 if __name__ == '__main__':
-    # Create mock feature data (200 rows of features for one stock)
-    dates = pd.to_datetime(pd.date_range('2024-01-01', periods=200, freq='B'))
-    mock_features = pd.DataFrame({'Feature_1': np.random.rand(200)}, index=dates)
-    mock_targets = pd.DataFrame({'Target_A': np.random.rand(200)}, index=dates)
-    
-    # Initialize and Test
-    lstm_model = LSTMPredictor(look_back=10, features_count=1)
-    lstm_model.train(mock_features, mock_targets, epochs=1) # Train briefly
-    
-    # Simple prediction check
-    prediction_df = lstm_model.predict(mock_features)
-    print("\nLSTM Model Initialization and Training Check Passed.")
-    print("Example Prediction:")
-    print(prediction_df)
+    print("LSTM model now expects multiple features. Rerun main.py to test.")
