@@ -1,7 +1,9 @@
 PROJECT RESULTS SUMMARY (2015-2024)
 
 | Markowitz       | Sharpe: 1.927 | Cum Return: 345.674
-| Random Forest   | Sharpe: 2.248 | Cum Return: 3542.730
-|                 | MAE: 0.00200 | DA: 0.564
+| Random Forest   | Sharpe: 2.294 | Cum Return: 3844.248
+|                 | MAE: 0.00200 | DA: 0.571
 | XGBoost         | Sharpe: 2.077 | Cum Return: 1768.385
 |                 | MAE: 0.00201 | DA: 0.568
+| LightGBM        | Sharpe: 2.139 | Cum Return: 2350.188
+|                 | MAE: 0.00198 | DA: 0.563

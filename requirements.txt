@@ -3,5 +3,5 @@ numpy
 scikit-learn
 xgboost
 yfinance
-tensorflow
 matplotlib
+lightgbm

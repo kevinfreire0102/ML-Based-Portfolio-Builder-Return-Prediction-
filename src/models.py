@@ -1,7 +1,8 @@
 import pandas as pd
-import numpy as np 
+import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor # NOUVEL IMPORT
 from typing import Any, Dict
 
 class BaseMLModel:
@@ -21,8 +22,10 @@ class BaseMLModel:
             self.model = RandomForestRegressor(random_state=42, n_estimators=100, **kwargs)
         elif self.model_type == 'xgboost':
             self.model = XGBRegressor(random_state=42, n_estimators=100, **kwargs)
+        elif self.model_type == 'lightgbm': # NOUVEL AJOUT
+            self.model = LGBMRegressor(random_state=42, n_estimators=100, **kwargs)
         else:
-            raise ValueError(f"Unsupported model type: {model_type}. Must be 'random_forest' or 'xgboost'.")
+            raise ValueError(f"Unsupported model type: {model_type}. Must be 'random_forest', 'xgboost', or 'lightgbm'.")
 
     def train(self, X: pd.DataFrame, y: pd.DataFrame) -> None:
         """
@@ -50,21 +53,28 @@ class BaseMLModel:
         if self.model is None:
             raise RuntimeError("Model must be trained before calling predict.")
             
+        # The prediction must generate 5 days * 7 stocks = 35 predictions
         num_stocks = 7 
         
+        # 1. Prediction using stacked features 
         X_stacked = pd.concat([X] * num_stocks, ignore_index=True)
         
+        # 2. Generate predictions (Should result in 35 values)
         predictions_flat = self.model.predict(X_stacked)
         
+        # 3. Reshape predictions back into a DataFrame (rows=dates (5), columns=stocks (7))
         num_rows = len(X) 
         
         predictions_matrix = predictions_flat.reshape(num_rows, num_stocks)
         
+        # The columns should be the stock Tickers, which are found in the FEATURES data X
         ticker_columns = X.columns[:num_stocks] 
         
+        # Create DataFrame with the correct index (dates) and columns (tickers)
         predictions_df = pd.DataFrame(predictions_matrix, index=X.index, columns=ticker_columns)
         
         return predictions_df
         
+# --- Local Testing Block ---
 if __name__ == '__main__':
     print("Base model training setup complete. We will integrate with feature data next.")

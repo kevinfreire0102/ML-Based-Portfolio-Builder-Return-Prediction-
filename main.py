@@ -7,11 +7,11 @@ from typing import List
 # Import all modules from the 'src' directory
 from src.data_loader import download_sp500_data
 from src.features import calculate_returns, add_technical_indicators
-from src.models import BaseMLModel
-from src.lstm_model import LSTMPredictor
+from src.models import BaseMLModel # Importe BaseMLModel qui gère RF, XGBoost et LightGBM
+# from src.lstm_model import LSTMPredictor # LSTM DÉSACTIVÉ pour la stabilité
 from src.backtester import RollingWindowBacktester
 from src.evaluation import evaluate_portfolio, calculate_markowitz_weights
-from src.visualization import create_cumulative_returns_plot, create_drawdown_plot, create_confusion_matrix_plot # <-- NOUVEL IMPORT DE VISUALISATION
+from src.visualization import create_cumulative_returns_plot, create_drawdown_plot, create_confusion_matrix_plot 
 
 # Configuration
 RANDOM_STATE = 42 
@@ -19,8 +19,7 @@ np.random.seed(RANDOM_STATE)
 
 TICKERS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'JPM', 'V', 'NVDA']
 START_DATE = '2015-01-01'
-# Date de soumission complète
-END_DATE = '2024-12-31' 
+END_DATE = '2024-12-31' # Date de soumission complète
 
 # ML/Backtesting Parameters
 TRAIN_WINDOW_SIZE = 500 
@@ -61,10 +60,8 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
     # Model Instantiation 
     rf_model = BaseMLModel(model_type='random_forest')
     xgb_model = BaseMLModel(model_type='xgboost')
+    lgbm_model = BaseMLModel(model_type='lightgbm') # LightGBM remplace l'LSTM
     
-    lstm_features_count = features_with_indicators.shape[1]
-    lstm_model = LSTMPredictor(look_back=20, features_count=lstm_features_count)
-
     # Backtester Instantiation
     backtester = RollingWindowBacktester(
         features=features_with_indicators,
@@ -76,14 +73,13 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
     # Run Backtests
     rf_predictions = backtester.run_backtest(rf_model, "Random Forest")
     xgb_predictions = backtester.run_backtest(xgb_model, "XGBoost")
-    # LSTM disabled for successful execution - Uncomment for full run if LSTM is fully debugged
-    # lstm_predictions = backtester.run_backtest(lstm_model, "LSTM") 
+    lgbm_predictions = backtester.run_backtest(lgbm_model, "LightGBM") # Exécuter LightGBM
     
     # Store predictions for evaluation
     all_predictions = {
         "Random Forest": rf_predictions,
         "XGBoost": xgb_predictions,
-        # "LSTM": lstm_predictions
+        "LightGBM": lgbm_predictions # Stocker les prédictions du LightGBM
     }
 
     print("\nBacktesting completed for all models.")
@@ -93,20 +89,21 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
     print("3. FINAL EVALUATION AND REPORTING")
     print("="*60)
     
-    # --- A. Evaluation ---
+    # A. Evaluation
     evaluation_results = evaluate_portfolio(all_predictions, targets, raw_prices) 
     
-    # --- B. Display and Save Numerical Results ---
+    # B. Display and Save Numerical Results
     print("\nFINAL RESULTS (Comparison of all strategies):")
     print("-" * 35)
     
     results_str = ""
     for model, res in evaluation_results.items():
+        print(f"| {model:<15} | Sharpe: {res['Sharpe Ratio']:.3f} | Cum Return: {res['Cumulative Return']:.3f}")
         results_str += f"| {model:<15} | Sharpe: {res['Sharpe Ratio']:.3f} | Cum Return: {res['Cumulative Return']:.3f}\n"
         if 'Directional Accuracy' in res:
+             print(f"| {'':<15} | MAE: {res['MAE']:.5f} | DA: {res['Directional Accuracy']:.3f}")
              results_str += f"| {'':<15} | MAE: {res['MAE']:.5f} | DA: {res['Directional Accuracy']:.3f}\n"
     
-    print(results_str, end='')
     print("-" * 35)
 
     # Save results summary to results/
@@ -119,20 +116,21 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
         
     print(f"\nNumerical results saved to: {OUTPUT_FILE}")
 
-    # --- C. Generate and Save Plots ---
+    # C. Generate and Save Plots
     print("\n" + "="*60)
     print("4. GENERATING FINAL PLOTS AND VISUALIZATIONS")
     print("="*60)
     
     # Cumulative Returns Plot (Graph 1)
-    create_cumulative_returns_plot(evaluation_results) # Compares RF, XGBoost, Markowitz
+    create_cumulative_returns_plot(evaluation_results)
     
     # Drawdown Plot (Graph 2)
     create_drawdown_plot(evaluation_results)
     
-    # Confusion Matrix for the two successful ML models (Graph 3 & 4)
+    # Confusion Matrix for the three successful ML models (Graph 3, 4, 5)
     create_confusion_matrix_plot(evaluation_results, 'Random Forest', file_name='cm_random_forest.png')
     create_confusion_matrix_plot(evaluation_results, 'XGBoost', file_name='cm_xgboost.png')
+    create_confusion_matrix_plot(evaluation_results, 'LightGBM', file_name='cm_lightgbm.png') # Nouveau graphique
     
     print("\nAll visualizations saved to the 'results/plots' directory.")
 
