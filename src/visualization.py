@@ -5,7 +5,6 @@ import seaborn as sns
 from typing import Dict, Any, List
 import os
 
-# Define the output directory for plots
 OUTPUT_DIR = 'results/plots'
 
 def create_cumulative_returns_plot(results: Dict[str, Any], file_name: str = 'cumulative_returns.png'):
@@ -16,12 +15,9 @@ def create_cumulative_returns_plot(results: Dict[str, Any], file_name: str = 'cu
     plt.figure(figsize=(12, 7))
     
     for model_name, data in results.items():
-        # Retrieve the list of returns and convert it to a pandas Series
         returns_series = pd.Series(data['Returns Series'])
-        # The cumulative product requires (1 + returns)
         cumulative_returns = (1 + returns_series).cumprod()
         
-        # Plotting - Use index and values explicitly to force date display on X-axis
         plt.plot(cumulative_returns.index, cumulative_returns.values, label=model_name)
     
     plt.title('Cumulative Portfolio Returns Comparison (2015-2024)', fontsize=16)
@@ -30,7 +26,6 @@ def create_cumulative_returns_plot(results: Dict[str, Any], file_name: str = 'cu
     plt.legend()
     plt.grid(True, alpha=0.5)
     
-    # Save the plot
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     save_path = os.path.join(OUTPUT_DIR, file_name)
     plt.savefig(save_path)
@@ -53,7 +48,7 @@ def create_drawdown_plot(results: Dict[str, Any], file_name: str = 'max_drawdown
         drawdown = (cumulative_returns / peak) - 1
         
         # Plotting - Use index and values explicitly to force date display on X-axis
-        plt.plot(drawdown.index, drawdown.values, label=model_name) # <-- CORRECTION APPLIQUÉE
+        plt.plot(drawdown.index, drawdown.values, label=model_name) 
     
     plt.title('Maximum Drawdown Comparison (Risk Assessment)', fontsize=16)
     plt.xlabel('Date')
@@ -61,7 +56,6 @@ def create_drawdown_plot(results: Dict[str, Any], file_name: str = 'max_drawdown
     plt.legend()
     plt.grid(True, alpha=0.5)
     
-    # Save the plot
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     save_path = os.path.join(OUTPUT_DIR, file_name)
     plt.savefig(save_path)
@@ -83,7 +77,6 @@ def create_confusion_matrix_plot(results: Dict[str, Any], model_name: str, file_
         
     cm_data = np.array(cm_list)
     
-    # Check if the matrix is 2x2 (expected for binary classification: UP vs DOWN)
     if cm_data.shape != (2, 2):
         print(f"Error: Confusion Matrix shape is {cm_data.shape}. Expected (2, 2). Skipping.")
         return
@@ -93,14 +86,12 @@ def create_confusion_matrix_plot(results: Dict[str, Any], model_name: str, file_
                          columns=['Predicted Down (-1)', 'Predicted Up (+1)'])
 
     plt.figure(figsize=(6, 5))
-    # Use heatmap for visualization
     sns.heatmap(cm_df, annot=True, fmt='d', cmap='Blues', cbar=False)
     
     plt.title(f'Confusion Matrix for {model_name} (Directional Accuracy)', fontsize=14)
     plt.ylabel('Actual Direction')
     plt.xlabel('Predicted Direction')
     
-    # Save the plot
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     save_path = os.path.join(OUTPUT_DIR, file_name)
     plt.savefig(save_path)
@@ -108,6 +99,5 @@ def create_confusion_matrix_plot(results: Dict[str, Any], model_name: str, file_
     print(f"Plot saved: {save_path}")
 
 
-# --- Local Testing Block ---
 if __name__ == '__main__':
     print("Visualization functions are ready to be called from main.py.")

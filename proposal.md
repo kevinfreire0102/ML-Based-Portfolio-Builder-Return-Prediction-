@@ -9,7 +9,7 @@ The objective is to build a Python tool that predicts short-term stock returns, 
 The project combines financial data processing, feature engineering, model comparison, and quantitative evaluation — bridging finance and machine learning.
 
 ## Planned Approach and Technologies
-- **Data Source & Universe:** Daily adjusted close prices for the **top 100 S&P 500 constituents by market capitalization**, retrieved via the **`yfinance` API**, covering **January 2015 to December 2024**.  
+- **Data Source & Universe:** Daily adjusted close prices for the **7 majors constituents S&P 500 constituents by market capitalization**, retrieved via the **`yfinance` API**, covering **January 2015 to December 2024**.  
 - **Feature Engineering:** Computation of technical indicators such as lagged returns, momentum, rolling volatility, Relative Strength Index (RSI), moving averages, and trading volume.  
 - **Prediction Target:** Forecast **next-week (5-day ahead) returns** for each stock based on historical patterns.  
 - **Machine Learning Models:** Train and compare multiple algorithms — **Random Forest**, **XGBoost**, and a **lightweight LSTM** to capture temporal dependencies. The LSTM will be a compact extension, ensuring feasibility while demonstrating the integration of deep learning.  

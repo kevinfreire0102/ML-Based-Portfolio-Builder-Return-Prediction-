@@ -25,12 +25,10 @@ def add_technical_indicators(features_df: pd.DataFrame) -> pd.DataFrame:
         new_features[f'{ticker}_daily_return'] = daily_return
 
         # 2. Calculate Volatility (Standard Deviation of daily returns over 20 days)
-        # Apply rolling calculation on the daily_return series
         volatility = daily_return.rolling(window=20).std() * np.sqrt(252) # Annulized
         new_features[f'{ticker}_volatility'] = volatility
 
         # 3. Calculate Moving Averages (Simple Moving Averages - SMA)
-        # Apply rolling calculation on the price series
         new_features[f'{ticker}_SMA_50'] = prices.rolling(window=50).mean()
         new_features[f'{ticker}_SMA_200'] = prices.rolling(window=200).mean()
 
@@ -39,14 +37,12 @@ def add_technical_indicators(features_df: pd.DataFrame) -> pd.DataFrame:
         gains = delta.where(delta > 0, 0)
         losses = -delta.where(delta < 0, 0)
         
-        # We must use EWM directly on the series
         avg_gain = gains.ewm(com=13, adjust=False).mean()
         avg_loss = losses.ewm(com=13, adjust=False).mean()
         
         rs = avg_gain / avg_loss
         new_features[f'{ticker}_RSI'] = 100 - (100 / (1 + rs))
 
-        # 5. Add current price and lagged prices as features
         new_features[f'{ticker}_price'] = prices
         new_features[f'{ticker}_price_lag_1'] = prices.shift(1)
 
@@ -59,7 +55,6 @@ def add_technical_indicators(features_df: pd.DataFrame) -> pd.DataFrame:
     return features_df
 
 if __name__ == "__main__":
-    # We need enough data points (e.g., 250 rows) for the 200-day SMA to calculate
     dates = pd.to_datetime(pd.date_range('2024-01-01', periods=250, freq='D'))
     mock_data = pd.DataFrame({
         'TEST_A': np.linspace(100, 200, 250) + np.random.randn(250) * 5,

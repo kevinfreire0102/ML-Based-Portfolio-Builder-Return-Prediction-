@@ -39,7 +39,6 @@ class LSTMPredictor:
         Defines the lightweight LSTM architecture.
         """
         model = Sequential()
-        # Input layer expects (look_back, features_count) -> (20, 56)
         model.add(LSTM(50, input_shape=(self.look_back, self.features_count), return_sequences=True))
         model.add(Dropout(0.2))
         model.add(LSTM(50))
@@ -53,7 +52,7 @@ class LSTMPredictor:
         """
         Scales ALL data, creates sequences, and trains the LSTM model.
         """
-        # CRITICAL FIX: Use ALL 56 columns for scaling
+        # Use ALL 56 columns for scaling
         scaled_data = self.scaler.fit_transform(X_features.values)
 
         # Creating sequences (2D -> 3D reshape)
@@ -68,41 +67,29 @@ class LSTMPredictor:
         """
         Scales and reshapes current data, then generates a single step prediction.
         """
-        # CRITICAL FIX: Scale ALL 56 columns
         scaled_data = self.scaler.transform(X_features.values)
         
-        # FIX: We ensure we only take the last LOOK_BACK rows (20) to form the sequence
         last_sequence_data = scaled_data[-self.look_back:] 
         
-        # Reshape into the required (1, look_back, features_count) -> (1, 20, 56)
         last_sequence = last_sequence_data.reshape(1, self.look_back, self.features_count)
 
-        # Predict and inverse transform
         scaled_prediction = self.model.predict(last_sequence, verbose=0)
         
-        # L'inverse_transform attend une entrÉe avec 56 colonnes, nous en donnons 1 seule
-        # Nous allons donc rÉaliser l'inverse_transform sur un array de 56 colonnes
         dummy_array = np.zeros((1, self.features_count))
-        dummy_array[0, 0] = scaled_prediction[0, 0] # Remplir la premiÈre colonne avec la prÉdiction
+        dummy_array[0, 0] = scaled_prediction[0, 0] 
         
-        prediction = self.scaler.inverse_transform(dummy_array)[0, 0] # Prendre la premiÈre valeur inversÉe
+        prediction = self.scaler.inverse_transform(dummy_array)[0, 0] 
         
-        # Nous retournons la prÉdiction pour la premiÈre action (index 0)
         first_stock_ticker = X_features.columns[0]
         
-        # Correction pour retourner un DataFrame avec 5 lignes et 7 colonnes (comme les autres modÈles)
-        # Note: Le LSTM est trÈs simplifiÉ ici et prÉdit une seule valeur (le retour du premier stock)
-        # Nous allons donc rÉpliquer cette valeur sur toutes les 7 actions pour simuler une prÉdiction complÈte
-        
         num_stocks = 7
-        prediction_matrix = np.full((5, num_stocks), prediction) # 5 jours * 7 stocks
+        prediction_matrix = np.full((5, num_stocks), prediction) 
         
         ticker_columns = X_features.columns[:num_stocks]
-        dates = X_features.index[-5:] # Nous prenons les 5 derniÈres dates (pour matcher PREDICT_STEPS=5)
+        dates = X_features.index[-5:] 
         
         return pd.DataFrame(prediction_matrix, index=dates, columns=ticker_columns)
 
 
-# --- Local Testing Block ---
 if __name__ == '__main__':
     print("LSTM model now expects multiple features. Rerun main.py to test.")

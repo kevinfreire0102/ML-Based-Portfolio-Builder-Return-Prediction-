@@ -50,29 +50,21 @@ class BaseMLModel:
         if self.model is None:
             raise RuntimeError("Model must be trained before calling predict.")
             
-        # Le nombre d'actions est dÉduit des colonnes dans le fichier targets (7 ici)
         num_stocks = 7 
         
-        # 1. Prediction using stacked features 
         X_stacked = pd.concat([X] * num_stocks, ignore_index=True)
         
-        # 2. Generate predictions (Should result in 5*7 = 35 values)
         predictions_flat = self.model.predict(X_stacked)
         
-        # 3. Reshape predictions back into a DataFrame 
         num_rows = len(X) 
         
-        # CRITICAL FIX: The final prediction matrix should be (5 rows, 7 stocks)
         predictions_matrix = predictions_flat.reshape(num_rows, num_stocks)
         
-        # The columns should be the stock Tickers, which are found in the FEATURES data X
         ticker_columns = X.columns[:num_stocks] 
         
-        # Create DataFrame with the correct index (dates) and columns (tickers)
         predictions_df = pd.DataFrame(predictions_matrix, index=X.index, columns=ticker_columns)
         
         return predictions_df
         
-# --- Local Testing Block ---
 if __name__ == '__main__':
     print("Base model training setup complete. We will integrate with feature data next.")
