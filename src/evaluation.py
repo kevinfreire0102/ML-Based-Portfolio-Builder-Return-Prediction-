@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Any # <-- FIX: Ajout de 'Any'
+from typing import Dict, List, Tuple, Any 
 from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix
 import warnings
@@ -152,7 +152,7 @@ def evaluate_portfolio(predictions: Dict[str, pd.DataFrame], targets: pd.DataFra
         'Sharpe Ratio': calculate_sharpe_ratio(markowitz_returns),
         'Max Drawdown': calculate_drawdown(markowitz_returns).min(),
         'Cumulative Return': (1 + markowitz_returns).prod() - 1,
-        'Returns Series': markowitz_returns.tolist()
+        'Returns Series': markowitz_returns, # <-- FIX: Enregistre la SÉRIE Pandas (avec index)
     }
     
     # --- ML Models Evaluation ---
@@ -196,7 +196,7 @@ def evaluate_portfolio(predictions: Dict[str, pd.DataFrame], targets: pd.DataFra
             'Sharpe Ratio': calculate_sharpe_ratio(portfolio_returns),
             'Max Drawdown': calculate_drawdown(portfolio_returns).min(),
             'Cumulative Return': (1 + portfolio_returns).prod() - 1,
-            'Returns Series': portfolio_returns.tolist(),
+            'Returns Series': portfolio_returns, # <-- FIX: Enregistre la SÉRIE Pandas (avec index)
         }
         
         # 2. Calculate ML Metrics (MAE, DA, CM)
