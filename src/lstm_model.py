@@ -43,7 +43,7 @@ class LSTMPredictor:
         model.add(Dropout(0.2))
         model.add(LSTM(50))
         model.add(Dropout(0.2))
-        model.add(Dense(1)) # Output is a single value (the predicted return for the target stock)
+        model.add(Dense(1)) 
         
         model.compile(loss='mse', optimizer='adam')
         return model
@@ -58,7 +58,6 @@ class LSTMPredictor:
         # Creating sequences (2D -> 3D reshape)
         X_seq, y_seq = self._create_sequences(scaled_data, self.look_back)
 
-        # Training
         print(f"Training LSTM model on {X_seq.shape[0]} sequences...")
         self.model.fit(X_seq, y_seq, epochs=epochs, batch_size=batch_size, verbose=0)
         print("LSTM model trained.")

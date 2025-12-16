@@ -34,7 +34,7 @@ def download_sp500_data(tickers: List[str] = TICKERS_SAMPLE,
     
     data = data.copy()
     
-    # Drop dates where ALL prices are missing
+    # Drop dates where all prices are missing
     data.dropna(how='all', inplace=True)
     
     print("Download completed.")

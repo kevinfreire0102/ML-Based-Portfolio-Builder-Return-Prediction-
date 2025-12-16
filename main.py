@@ -4,24 +4,21 @@ import warnings
 import os
 from typing import List
 
-# Import all modules from the 'src' directory
 from src.data_loader import download_sp500_data
 from src.features import calculate_returns, add_technical_indicators
-from src.models import BaseMLModel # Importe BaseMLModel qui gère RF, XGBoost et LightGBM
-# from src.lstm_model import LSTMPredictor # LSTM DÉSACTIVÉ pour la stabilité
+from src.models import BaseMLModel 
+# from src.lstm_model import LSTMPredictor 
 from src.backtester import RollingWindowBacktester
 from src.evaluation import evaluate_portfolio, calculate_markowitz_weights
 from src.visualization import create_cumulative_returns_plot, create_drawdown_plot, create_confusion_matrix_plot 
 
-# Configuration
 RANDOM_STATE = 42 
 np.random.seed(RANDOM_STATE) 
 
 TICKERS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'JPM', 'V', 'NVDA']
 START_DATE = '2015-01-01'
-END_DATE = '2024-12-31' # Date de soumission complète
+END_DATE = '2024-12-31' 
 
-# ML/Backtesting Parameters
 TRAIN_WINDOW_SIZE = 500 
 PREDICT_STEPS = 5
 
@@ -60,7 +57,7 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
     # Model Instantiation 
     rf_model = BaseMLModel(model_type='random_forest')
     xgb_model = BaseMLModel(model_type='xgboost')
-    lgbm_model = BaseMLModel(model_type='lightgbm') # LightGBM remplace l'LSTM
+    lgbm_model = BaseMLModel(model_type='lightgbm') 
     
     # Backtester Instantiation
     backtester = RollingWindowBacktester(
@@ -73,18 +70,18 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
     # Run Backtests
     rf_predictions = backtester.run_backtest(rf_model, "Random Forest")
     xgb_predictions = backtester.run_backtest(xgb_model, "XGBoost")
-    lgbm_predictions = backtester.run_backtest(lgbm_model, "LightGBM") # Exécuter LightGBM
+    lgbm_predictions = backtester.run_backtest(lgbm_model, "LightGBM") 
     
     # Store predictions for evaluation
     all_predictions = {
         "Random Forest": rf_predictions,
         "XGBoost": xgb_predictions,
-        "LightGBM": lgbm_predictions # Stocker les prédictions du LightGBM
+        "LightGBM": lgbm_predictions 
     }
 
     print("\nBacktesting completed for all models.")
     
-    # 4. Evaluation, Reporting, and Visualization (Phase 4.2 & 5)
+    # 4. Evaluation, Reporting, and Visualization 
     print("\n" + "="*60)
     print("3. FINAL EVALUATION AND REPORTING")
     print("="*60)
@@ -130,7 +127,7 @@ def run_project(tickers: List[str] = TICKERS, start_date: str = START_DATE, end_
     # Confusion Matrix for the three successful ML models (Graph 3, 4, 5)
     create_confusion_matrix_plot(evaluation_results, 'Random Forest', file_name='cm_random_forest.png')
     create_confusion_matrix_plot(evaluation_results, 'XGBoost', file_name='cm_xgboost.png')
-    create_confusion_matrix_plot(evaluation_results, 'LightGBM', file_name='cm_lightgbm.png') # Nouveau graphique
+    create_confusion_matrix_plot(evaluation_results, 'LightGBM', file_name='cm_lightgbm.png') 
     
     print("\nAll visualizations saved to the 'results/plots' directory.")
 

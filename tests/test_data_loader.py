@@ -26,8 +26,6 @@ def create_mock_data():
     
     return mock_return
 
-# --- Unit Test Class ---
-
 class TestDataLoader(unittest.TestCase):
     """
     Unit tests for functions in src/data_loader.py using mocking.

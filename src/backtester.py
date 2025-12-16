@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Any, List, Tuple
 from src.models import BaseMLModel 
-# from src.lstm_model import LSTMPredictor # <-- L'IMPORTATION DE L'LSTM est retirée
+
 
 class RollingWindowBacktester:
     """
@@ -24,14 +24,11 @@ class RollingWindowBacktester:
         """
         Splits the data into training and testing sets based on the rolling window index.
         """
-        # Determine the end index for the training set
         train_end_index = start_index + self.train_window
         
-        # Training set
         X_train = self.features.iloc[start_index : train_end_index]
         y_train = self.targets.iloc[start_index : train_end_index]
         
-        # Testing set (the next 'predict_steps' rows)
         X_test = self.features.iloc[train_end_index : train_end_index + self.predict_steps]
         y_test = self.targets.iloc[train_end_index : train_end_index + self.predict_steps]
         
@@ -43,36 +40,28 @@ class RollingWindowBacktester:
         """
         model_predictions = {}
         
-        # Determine the start of the prediction period (after the initial training window)
         start_prediction_index = self.train_window
         
-        # The loop iterates through the data, retraining and predicting sequentially
         for i in range(start_prediction_index, len(self.features) - self.predict_steps, self.predict_steps):
             
-            # 1. Calculate the starting index for the full window (training window)
             window_start = i - self.train_window
             
-            # 2. Split the data for the current window
             X_train, y_train, X_test, y_test = self._split_data(window_start)
             
             if X_test.empty:
                 break
             
-            # 3. Train the model
             print(f"Training {model_name} on data ending {X_train.index[-1].strftime('%Y-%m-%d')}")
             
             try:
-                # BaseMLModel (RF/XGBoost)
                 model_instance.train(X_train, y_train)
                     
             except Exception as e:
                 print(f"Error during training {model_name} at index {i}: {e}")
                 continue
             
-            # 4. Predict the next steps
             y_pred = model_instance.predict(X_test)
             
-            # Store predictions using the test set index
             model_predictions.update(y_pred.to_dict(orient='index'))
 
         predictions_df = pd.DataFrame.from_dict(model_predictions, orient='index')
@@ -83,6 +72,5 @@ class RollingWindowBacktester:
         
         return predictions_df
         
-# --- Local Testing Block ---
 if __name__ == '__main__':
     print("Backtester setup complete. Integration with full data and models will be tested later.")

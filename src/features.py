@@ -25,7 +25,7 @@ def add_technical_indicators(features_df: pd.DataFrame) -> pd.DataFrame:
         new_features[f'{ticker}_daily_return'] = daily_return
 
         # 2. Calculate Volatility (Standard Deviation of daily returns over 20 days)
-        volatility = daily_return.rolling(window=20).std() * np.sqrt(252) # Annulized
+        volatility = daily_return.rolling(window=20).std() * np.sqrt(252) 
         new_features[f'{ticker}_volatility'] = volatility
 
         # 3. Calculate Moving Averages (Simple Moving Averages - SMA)

@@ -124,7 +124,6 @@ def evaluate_portfolio(predictions: Dict[str, pd.DataFrame], targets: pd.DataFra
         
         weights = calculate_markowitz_weights(historical_returns)
         
-        # Calculate the return for the prediction period (5 days) using these static weights
         target_period_returns = targets.loc[start_date]
         markowitz_returns[start_date] = np.sum(target_period_returns * weights)
 
@@ -136,7 +135,6 @@ def evaluate_portfolio(predictions: Dict[str, pd.DataFrame], targets: pd.DataFra
         'Returns Series': markowitz_returns, 
     }
     
-    # --- ML Models Evaluation ---
     for model_name, pred_df in predictions.items():
         
         
