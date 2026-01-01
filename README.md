@@ -36,6 +36,7 @@ ml-portfolio-project/
 ├── proposal.md
 ├── README.md
 ├── setup.py
+├── AI_usage.md
 └── requirements.txt     # Pip dependencies
 
 
@@ -48,5 +49,5 @@ ml-portfolio-project/
 Winner: Random Forest (3844.248% Cumulative Return)
 
 ## Requirements
-- Python 3.11
-- scikit-learn, pandas, xgboost, lightgbm, yfinance, matplotlib
+- **Python 3.11**
+- **scikit-learn** (==1.7.0), **pandas** (==2.1.1), **numpy** (==1.26.4), **yfinance** (==0.2.40), **xgboost**, **lightgbm**, **matplotlib**, **seaborn**, **requests**, **multitasking**, **frozendict**, **beautifulsoup4**, **lxml**
